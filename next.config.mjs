@@ -4,22 +4,16 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'scontent.cdninstagram.com',
+        hostname: '**',
         pathname: '**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'scontent.fdel11-2.fna.fbcdn.net',
-        pathname: '**',
-      },
-      
+      }
     ],
   },
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:5000/:path*', // Proxy to Backend
+        destination: 'https://instaassignment-backend.onrender.com/:path*', // Proxy to Backend
       },
     ];
   },

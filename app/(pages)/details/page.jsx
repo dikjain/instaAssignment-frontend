@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import useStore from '@/app/store/store'
 import Image from 'next/image'
@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Masonry from 'react-masonry-css'
 import { MediaCard, NoMediaCard } from '@/app/components/cards'
 
-export default function DetailsPage() {
+function DetailsPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { fetchInstagramMedia, loadUserDataFromLocalStorage } = useStore()
@@ -381,5 +381,17 @@ export default function DetailsPage() {
         </AnimatePresence>
       </motion.div>
     </motion.div>
+  )
+}
+
+export default function DetailsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#121212]">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    }>
+      <DetailsPageContent />
+    </Suspense>
   )
 }

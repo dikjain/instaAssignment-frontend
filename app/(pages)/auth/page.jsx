@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { FaInstagram, FaCommentDots, FaChartLine, FaRocket, FaPlay, FaFilter } from 'react-icons/fa'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -8,7 +8,8 @@ import useStore from '@/app/store/store'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 
-function AuthPage() {
+// Component to handle authentication logic that requires useSearchParams
+function AuthHandler() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -22,25 +23,6 @@ function AuthPage() {
     fetchInstagramAccounts,
     extendAccessToken
   } = useStore()
-  
-  // Make a normal GET request to the backend on load to start the server
-  useEffect(() => {
-    const startServer = async () => {
-      try {
-        await fetch('/api', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log("Server ping successful");
-      } catch (error) {
-        console.error("Error pinging server:", error);
-      }
-    };
-    
-    startServer();
-  }, []);
   
   useEffect(() => {
     // Check for error or success parameters in the URL
@@ -127,6 +109,122 @@ function AuthPage() {
       router.push(`/details?ig_user_id=${firstAccount.instagramAccountId}&access_token=${authStatus.token}`)
     }
   }, [authStatus, instagramAccounts, router, isProcessing, redirectAttempted])
+
+  return (
+    <>
+      <AnimatePresence>
+        {authStatus && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`mb-4 p-3 rounded-md w-full text-center ${
+              authStatus.success 
+                ? 'bg-[#00CCFF]/20 text-[#00CCFF] border-2 border-[#00CCFF]/50' 
+                : 'bg-[#FF3366]/20 text-[#FF3366] border-2 border-[#FF3366]/50'
+            }`}
+          >
+            {authStatus.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <AnimatePresence>
+        {isProcessing && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 p-3 bg-[#FFDE59]/20 text-[#FFDE59] border-2 border-[#FFDE59]/50 rounded-md w-full text-center"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin h-5 w-5 border-2 border-[#FFDE59] rounded-full border-t-transparent"></div>
+              <span>Processing your authentication... Please wait.</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <AnimatePresence>
+        {authStatus?.user && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 p-3 bg-[#00CCFF]/20 text-white rounded-md w-full border-2 border-[#00CCFF]/50"
+          >
+            <p className="font-bold">Welcome, {authStatus.user.name}!</p>
+            <p className="text-xs text-gray-400">User ID: {authStatus.user.id}</p>
+            {authStatus.user.email && <p className="text-xs text-gray-400">Email: {authStatus.user.email}</p>}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <AnimatePresence>
+        {instagramAccounts.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 w-full"
+          >
+            <h2 className="text-lg font-bold mb-2 text-white">Your Instagram Business Accounts:</h2>
+            <ul className="bg-[#121212] p-3 rounded-md border-2 border-[#333]">
+              {instagramAccounts.map((account, index) => (
+                <motion.li 
+                  key={index}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 + (index * 0.1) }}
+                  className="mb-2 pb-2 border-b border-[#333] last:border-0"
+                >
+                  <p className="font-medium text-white">{account.pageName}</p>
+                  <p className="text-xs text-gray-400">Instagram ID: {account.instagramAccountId}</p>
+                  {account.instagramDetails && (
+                    <div className="mt-1">
+                      <p className="text-sm text-[#00CCFF]">@{account.instagramDetails.username}</p>
+                      {account.instagramDetails.followers_count && (
+                        <p className="text-xs text-gray-500">
+                          Followers: {account.instagramDetails.followers_count.toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
+function AuthPage() {
+  const { 
+    authStatus, 
+    instagramAccounts, 
+    getInstagramAuthUrl
+  } = useStore()
+  
+  // Make a normal GET request to the backend on load to start the server
+  useEffect(() => {
+    const startServer = async () => {
+      try {
+        await fetch('/api', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log("Server ping successful");
+      } catch (error) {
+        console.error("Error pinging server:", error);
+      }
+    };
+    
+    startServer();
+  }, []);
 
   return (
     <motion.div 
@@ -266,91 +364,17 @@ function AuthPage() {
               >
                 Instagram Content Hub
               </motion.h1>
-            
-              <AnimatePresence>
-                {authStatus && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className={`mb-4 p-3 rounded-md w-full text-center ${
-                      authStatus.success 
-                        ? 'bg-[#00CCFF]/20 text-[#00CCFF] border-2 border-[#00CCFF]/50' 
-                        : 'bg-[#FF3366]/20 text-[#FF3366] border-2 border-[#FF3366]/50'
-                    }`}
-                  >
-                    {authStatus.message}
-                  </motion.div>
-                )}
-              </AnimatePresence>
               
-              <AnimatePresence>
-                {isProcessing && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-[#FFDE59]/20 text-[#FFDE59] border-2 border-[#FFDE59]/50 rounded-md w-full text-center"
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin h-5 w-5 border-2 border-[#FFDE59] rounded-full border-t-transparent"></div>
-                      <span>Processing your authentication... Please wait.</span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <AnimatePresence>
-                {authStatus?.user && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-[#00CCFF]/20 text-white rounded-md w-full border-2 border-[#00CCFF]/50"
-                  >
-                    <p className="font-bold">Welcome, {authStatus.user.name}!</p>
-                    <p className="text-xs text-gray-400">User ID: {authStatus.user.id}</p>
-                    {authStatus.user.email && <p className="text-xs text-gray-400">Email: {authStatus.user.email}</p>}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <AnimatePresence>
-                {instagramAccounts.length > 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 w-full"
-                  >
-                    <h2 className="text-lg font-bold mb-2 text-white">Your Instagram Business Accounts:</h2>
-                    <ul className="bg-[#121212] p-3 rounded-md border-2 border-[#333]">
-                      {instagramAccounts.map((account, index) => (
-                        <motion.li 
-                          key={index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.7 + (index * 0.1) }}
-                          className="mb-2 pb-2 border-b border-[#333] last:border-0"
-                        >
-                          <p className="font-medium text-white">{account.pageName}</p>
-                          <p className="text-xs text-gray-400">Instagram ID: {account.instagramAccountId}</p>
-                          {account.instagramDetails && (
-                            <div className="mt-1">
-                              <p className="text-sm text-[#00CCFF]">@{account.instagramDetails.username}</p>
-                              {account.instagramDetails.followers_count && (
-                                <p className="text-xs text-gray-500">
-                                  Followers: {account.instagramDetails.followers_count.toLocaleString()}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <Suspense fallback={
+                <div className="mb-4 p-3 bg-[#FFDE59]/20 text-[#FFDE59] border-2 border-[#FFDE59]/50 rounded-md w-full text-center">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin h-5 w-5 border-2 border-[#FFDE59] rounded-full border-t-transparent"></div>
+                    <span>Loading...</span>
+                  </div>
+                </div>
+              }>
+                <AuthHandler />
+              </Suspense>
               
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -367,7 +391,7 @@ function AuthPage() {
               </motion.div>
               
               <AnimatePresence>
-                {!authStatus?.success && !isProcessing && (
+                {!authStatus?.success && (
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
