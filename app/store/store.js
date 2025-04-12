@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import axios from 'axios'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const useStore = create((set, get) => ({
   authStatus: null,
