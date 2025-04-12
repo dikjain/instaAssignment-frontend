@@ -23,7 +23,6 @@ export default function DetailsPage() {
   const [userData, setUserData] = useState(null)
   
   useEffect(() => {
-    // Load user data from localStorage first
     const localUserData = loadUserDataFromLocalStorage()
     if (localUserData) {
       setUserData(localUserData)
@@ -56,10 +55,8 @@ export default function DetailsPage() {
   }
   
   const handlePostClick = (post) => {
-    // Store post data in localStorage to access it from the post page
     localStorage.setItem(`post_${post.id}`, JSON.stringify(post))
     
-    // Navigate to the post detail page
     const accessToken = searchParams.get('access_token')
     const igUserId = searchParams.get('ig_user_id')
     router.push(`/post/${post.id}?access_token=${accessToken}&ig_user_id=${igUserId}`)
@@ -78,7 +75,6 @@ export default function DetailsPage() {
       item.caption ? item.caption.toLowerCase().includes(searchTerm.toLowerCase()) : true
     )
   
-  // Masonry breakpoints
   const breakpointColumnsObj = {
     default: 4,
     1100: 3,
@@ -155,7 +151,6 @@ export default function DetailsPage() {
           </h1>
         </motion.div>
         
-        {/* Loading skeleton */}
         <div className="w-full max-w-7xl px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[1, 2, 3, 4, 5, 6, 8].map((item) => (

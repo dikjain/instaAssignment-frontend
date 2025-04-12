@@ -43,8 +43,6 @@ export const MediaCard = ({ item, onClick }) => {
             <div className="absolute top-2 right-2 bg-[#00CCFF] text-[#121212] text-sm px-3 py-1 rounded-full font-bold border-2 border-[#0099CC]">
               Reel
             </div>
-            
-            {/* Hearts and Comments inside thumbnail */}
             <div className="absolute bottom-2 left-2 right-2 flex justify-between">
               <motion.div 
                 whileHover={{ scale: 1.1 }}
@@ -61,8 +59,6 @@ export const MediaCard = ({ item, onClick }) => {
                 <span className="text-sm font-bold text-white">{item.comments_count || 0}</span>
               </motion.div>
             </div>
-            
-            {/* Caption for videos */}
             {item.caption && (
               <div className="absolute bottom-12 left-0 right-0 bg-black/70 p-2">
                 <p className="text-white text-sm line-clamp-2">{item.caption}</p>
@@ -80,8 +76,6 @@ export const MediaCard = ({ item, onClick }) => {
             <div className="absolute top-2 right-2 bg-[#FFDE59] text-[#121212] text-sm px-3 py-1 rounded-full font-bold border-2 border-[#CCAF47]">
               {item.media_type === 'CAROUSEL_ALBUM' ? 'Album' : 'Image'}
             </div>
-            
-            {/* Hearts and Comments inside thumbnail */}
             <div className="absolute bottom-2 left-2 right-2 flex justify-between">
               <motion.div 
                 whileHover={{ scale: 1.1 }}
@@ -98,7 +92,6 @@ export const MediaCard = ({ item, onClick }) => {
                 <span className="text-sm font-bold text-white">{item.comments_count || 0}</span>
               </motion.div>
             </div>
-            
             {item.caption && (
               <div className="absolute bottom-12 left-0 right-0 bg-black/70 p-2">
                 <p className="text-white text-sm line-clamp-2">{item.caption}</p>

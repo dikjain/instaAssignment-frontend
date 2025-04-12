@@ -2,26 +2,21 @@ import { create } from 'zustand'
 import axios from 'axios'
 
 const useStore = create((set, get) => ({
-  // Auth state
   authStatus: null,
   instagramAccounts: [],
-  authCode: null, // Track the current auth code
-  mediaItems: [], // Store fetched media items
-  userData: null, // Store complete user data
+  authCode: null,
+  mediaItems: [],
+  userData: null,
   
-  // Auth actions
   setAuthStatus: (status) => set({ authStatus: status }),
   
-  // Save user data to localStorage
   saveUserDataToLocalStorage: () => {
     const userData = get().userData;
     if (userData) {
       localStorage.setItem('instagram_user_data', JSON.stringify(userData));
-      console.log('User data saved to localStorage');
     }
   },
   
-  // Load user data from localStorage on initialization
   loadUserDataFromLocalStorage: () => {
     try {
       const savedData = localStorage.getItem('instagram_user_data');
@@ -46,27 +41,21 @@ const useStore = create((set, get) => ({
     return null;
   },
   
-  // Instagram API calls
   exchangeCodeForToken: async (code) => {
     try {
-      // Check if code is valid before making the request
       if (!code) {
         throw new Error('No authorization code provided');
       }
       
-      // Check if we've already processed this code
       const { authCode } = get();
       if (authCode === code) {
-        console.log('This code has already been processed');
-        return null; // Return early without making another request
+        return null;
       }
       
-      // Store the current code to prevent reuse
       set({ authCode: code });
       
-      const response = await axios.get('http://localhost:5000/auth/callback', { 
+      const response = await axios.get('/api/auth/callback', { 
         params: { code },
-        // Add timeout to prevent hanging requests
         timeout: 10000
       });
       
@@ -74,7 +63,6 @@ const useStore = create((set, get) => ({
         throw new Error('Invalid response from server');
       }
       
-      // Store complete user data
       set({ 
         userData: response.data,
         authStatus: { 
@@ -85,17 +73,14 @@ const useStore = create((set, get) => ({
         }
       });
       
-      // Fetch Instagram accounts after successful authentication
       await get().fetchInstagramAccounts(response.data.access_token);
       
-      // Save complete user data to localStorage after all fetching is done
       get().saveUserDataToLocalStorage();
       
       return response.data;
     } catch (error) {
       console.error('Error exchanging code:', error);
       
-      // Handle specific error for expired code
       const errorMessage = error.response?.data?.error?.message || 
                           error.message || 
                           'Authentication failed. Please try again.';
@@ -119,11 +104,10 @@ const useStore = create((set, get) => ({
   
   fetchInstagramAccounts: async (accessToken) => {
     try {
-      const response = await axios.get('http://localhost:5000/auth/instagram-accounts', {
+      const response = await axios.get('/api/auth/instagram-accounts', {
         params: { access_token: accessToken }
       });
       
-      // Update user data with Instagram accounts
       const userData = get().userData || {};
       const updatedUserData = {
         ...userData,
@@ -135,7 +119,6 @@ const useStore = create((set, get) => ({
         userData: updatedUserData
       });
       
-      // Save updated user data to localStorage
       get().saveUserDataToLocalStorage();
       
       return response.data.instagramAccounts;
@@ -145,28 +128,24 @@ const useStore = create((set, get) => ({
     }
   },
   
-  // Instagram OAuth URL construction
   getInstagramAuthUrl: () => {
     const clientId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID
     const redirectUri = process.env.NEXT_PUBLIC_REDIRECT_URI
     const scope = 'pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_basic,instagram_manage_comments,instagram_content_publish'
     
-    // Add state parameter to prevent CSRF attacks
     const state = Math.random().toString(36).substring(2, 15)
     
     return `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}`
   },
   
-  // Extend short-lived token to long-lived token
   extendAccessToken: async (shortLivedToken) => {
     try {
-      const response = await axios.get('http://localhost:5000/auth/extend-token', {
+      const response = await axios.get('/api/auth/extend-token', {
         params: {
           access_token: shortLivedToken
         }
       });
       
-      // Update user data with extended token
       const userData = get().userData || {};
       const updatedUserData = {
         ...userData,
@@ -177,7 +156,6 @@ const useStore = create((set, get) => ({
         userData: updatedUserData
       });
       
-      // Save updated user data to localStorage
       get().saveUserDataToLocalStorage();
       
       return response.data;
@@ -187,10 +165,9 @@ const useStore = create((set, get) => ({
     }
   },
   
-  // Fetch Instagram media posts
   fetchInstagramMedia: async (igUserId, accessToken) => {
     try {
-      const response = await axios.get(`http://localhost:5000/post/instagram-media`, {
+      const response = await axios.get(`/api/post/instagram-media`, {
         params: { 
           ig_user_id: igUserId,
           access_token: accessToken,
@@ -198,14 +175,12 @@ const useStore = create((set, get) => ({
         }
       });
       
-      // Process media items to ensure they have all required fields
       const processedMedia = response.data.data?.map(item => ({
         ...item,
         like_count: item.like_count || 0,
         comments_count: item.comments_count || 0
       })) || [];
       
-      // Store the media items in the state and update user data
       const userData = get().userData || {};
       const updatedUserData = {
         ...userData,
@@ -217,10 +192,8 @@ const useStore = create((set, get) => ({
         userData: updatedUserData
       });
       
-      // Save updated user data to localStorage
       get().saveUserDataToLocalStorage();
       
-      console.log("Media items:", processedMedia);
       return {
         ...response.data,
         media: processedMedia
@@ -232,10 +205,9 @@ const useStore = create((set, get) => ({
     }
   },
   
-  // Fetch comments on an Instagram post
   fetchInstagramComments: async (mediaId, accessToken) => {
     try {
-      const response = await axios.get(`http://localhost:5000/post/instagram-comments`, {
+      const response = await axios.get(`/api/post/instagram-comments`, {
         params: { 
           media_id: mediaId,
           access_token: accessToken,
@@ -249,10 +221,9 @@ const useStore = create((set, get) => ({
     }
   },
   
-  // Reply to a comment on an Instagram post
   replyToInstagramComment: async (commentId, message, accessToken) => {
     try {
-      const response = await axios.post('http://localhost:5000/post/instagram-reply', {
+      const response = await axios.post('/api/post/instagram-reply', {
         comment_id: commentId,
         message,
         access_token: accessToken

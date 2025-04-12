@@ -23,6 +23,25 @@ function AuthPage() {
     extendAccessToken
   } = useStore()
   
+  // Make a normal GET request to the backend on load to start the server
+  useEffect(() => {
+    const startServer = async () => {
+      try {
+        await fetch('/api', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log("Server ping successful");
+      } catch (error) {
+        console.error("Error pinging server:", error);
+      }
+    };
+    
+    startServer();
+  }, []);
+  
   useEffect(() => {
     // Check for error or success parameters in the URL
     const error = searchParams.get('error')

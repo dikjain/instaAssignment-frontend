@@ -22,13 +22,11 @@ export default function PostPage() {
   const [replyingTo, setReplyingTo] = useState(null)
   const [replyStatus, setReplyStatus] = useState(null)
   
-  // Get the post ID from the URL
   const postId = params.id
   const accessToken = searchParams.get('access_token')
   const igUserId = searchParams.get('ig_user_id')
   
   useEffect(() => {
-    // Get post data from localStorage (passed from details page)
     try {
       const storedPost = localStorage.getItem(`post_${postId}`)
       if (storedPost) {
@@ -46,7 +44,6 @@ export default function PostPage() {
   }, [postId])
   
   useEffect(() => {
-    // Load comments when post is loaded
     if (post && accessToken) {
       loadComments(post.id)
     }
@@ -76,7 +73,6 @@ export default function PostPage() {
       setReplyText('')
       setReplyingTo(null)
       setReplyStatus({ success: true, message: 'Reply posted successfully!' })
-      // Reload comments to show the new reply
       await loadComments(post.id)
     } catch (err) {
       console.error('Failed to post reply:', err)
@@ -382,7 +378,6 @@ export default function PostPage() {
                       )}
                     </div>
                     
-                    {/* Display replies if they exist */}
                     {comment.replies && comment.replies.data && comment.replies.data.length > 0 && (
                       <div className="mt-4 pl-4 border-l-2 border-[#444] space-y-3">
                         <p className="text-sm text-gray-400 font-medium">Replies:</p>
